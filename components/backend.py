@@ -47,7 +47,7 @@ if __name__ == '__main__':
             lead="John Doe",
             code="12345",
             is_task=False,
-            task_number=-1,
+            task_number='0',
             task_name="Some WP",
             task_lead="Alice Doe",
             priority=3,

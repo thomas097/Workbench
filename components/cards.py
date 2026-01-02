@@ -2,9 +2,9 @@ import streamlit as st
 from datetime import datetime
 
 if __package__:
-    from ._core import Badge, Attachment, Remark
+    from ._core import Badge, Attachment, Remark, Task
 else:
-    from _core import Badge, Attachment, Remark
+    from _core import Badge, Attachment, Remark, Task
 
 
 _BADGES = {
@@ -18,32 +18,23 @@ def _format_date(date: datetime) -> str:
     else:
         return date.strftime("%b %d, %Y").replace(" 0", " ")
 
-def kanban_card(
-        title: str, 
-        description: str, 
-        badges: list[str] = [], 
-        attachments: list[Attachment] = [],
-        remarks: list[Remark] = [],
-        due: datetime | None = None,
-        border: bool = True
-        ) -> None:
+def kanban_card(task: Task, border: bool = True) -> None:
     with st.container(border=border, horizontal=False):
 
         # First row
         with st.container(border=False, horizontal=True):
-            st.markdown(f"**{title}**")
+            st.markdown(f"**{task.name}**")
 
             st.space('stretch')
 
             # Row of badges
-            if badges:
+            if task.badges:
                 with st.container(border=False, horizontal=True, horizontal_alignment='right', width='content'):
-                    for badge_key in badges:
-                        badge = _BADGES.get(badge_key, Badge(label=badge_key)) # TODO: replace with DEFAULT_BADGE
+                    for badge in task.badges:
                         st.badge(label=badge.label, icon=badge.icon, color=badge.color)
 
         # Second row
-        st.write(description)
+        st.write(task.description)
 
         # Third row
         with st.container(border=False, horizontal=True):
@@ -52,18 +43,18 @@ def kanban_card(
                 st.button(":material/border_color:", type='tertiary')
 
                 # Attachments
-                attachment_icon = f":material/attach_file: {len(attachments)}" if attachments else ":material/attach_file_off:"
-                with st.popover(attachment_icon, type='tertiary', disabled=not attachments):
-                    for attachment in attachments:
+                attachment_icon = f":material/attach_file: {len(task.attachments)}" if task.attachments else ":material/attach_file_off:"
+                with st.popover(attachment_icon, type='tertiary', disabled=not task.attachments):
+                    for attachment in task.attachments:
                         attachment_card(attachment)
 
                     if st.button(label=":material/add:", key="add_attachment_buttonn", width='stretch'):
                         pass # TODO
 
                 # Comments
-                remark_icon = f":material/feedback: {len(remarks)}" if remarks else ":material/chat_bubble:"
-                with st.popover(remark_icon, type='tertiary', disabled=not remarks):
-                    for remark in remarks:
+                remark_icon = f":material/feedback: {len(task.remarks)}" if task.remarks else ":material/chat_bubble:"
+                with st.popover(remark_icon, type='tertiary', disabled=not task.remarks):
+                    for remark in task.remarks:
                         remark_card(remark)     
 
                     if st.button(label=":material/add:", key="add_remark_button", width='stretch'):
@@ -71,8 +62,8 @@ def kanban_card(
 
             st.space('stretch')
 
-            if due is not None:    
-                st.button(label=f"**Due:** {_format_date(due)}", icon=":material/timelapse:", type='tertiary', disabled=True)
+            if task.due is not None:    
+                st.button(label=f"**Due:** {_format_date(task.due)}", icon=":material/timelapse:", type='tertiary', disabled=True)
 
 
 def attachment_card(attachment: Attachment) -> None:
@@ -92,14 +83,19 @@ def remark_card(remark: Remark) -> None:
 
 if __name__ == '__main__':
     kanban_card(
-        title="Name of task", 
-        description="Description goes here...",
-        badges=["in_progress", "favorite", "lolz"],
-        attachments=[
-            Attachment(filepath="filename.pdf")
+        task=Task(
+            name="Name of task", 
+            description="Description goes here...",
+            badges=[
+                Badge(label='Favorite', color='violet', icon=':material/favorite:')
             ],
-        remarks=[
-            Remark(author="Thomas", date=datetime.now(), text="Completely disagree with all this and more!")
-            ],
-        due=datetime.now()
-        )
+            attachments=[
+                Attachment(filepath="filename.pdf")
+                ],
+            remarks=[
+                Remark(author="Thomas", date=datetime.now(), text="Completely disagree with all this and more!")
+                ],
+            due=datetime.now()
+            ),
+        border=True
+    )
