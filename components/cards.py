@@ -2,22 +2,28 @@ import streamlit as st
 from datetime import datetime
 
 if __package__:
-    from .core import Badge
+    from ._core import Badge, Attachment, Remark
 else:
-    from core import Badge
+    from _core import Badge, Attachment, Remark
 
 
 _BADGES = {
-    "in_progress": {"label": "In progress", "icon": ":material/pace:", "color": "yellow"},
-    "favorite": {"label": "Favorite", "icon": ":material/star:", "color": "violet"}
+    "in_progress": Badge(label="In progress", icon=":material/pace:", color="yellow"),
+    "favorite": Badge(label="Favorite", icon=":material/star:", color="violet")
 }
+
+def _format_date(date: datetime) -> str:
+    if date.year == datetime.now().year:
+        return date.strftime("%b %d").lstrip("0").replace(" 0", " ")
+    else:
+        return date.strftime("%b %d, %Y").replace(" 0", " ")
 
 def kanban_card(
         title: str, 
         description: str, 
         badges: list[str] = [], 
-        attachments: list[str] = [],
-        comments: list[str] = [],
+        attachments: list[Attachment] = [],
+        remarks: list[Remark] = [],
         due: datetime | None = None,
         border: bool = True
         ) -> None:
@@ -33,8 +39,8 @@ def kanban_card(
             if badges:
                 with st.container(border=False, horizontal=True, horizontal_alignment='right', width='content'):
                     for badge_key in badges:
-                        badge_args = _BADGES.get(badge_key, {'label': badge_key, 'color': 'grey'})
-                        st.badge(**badge_args) #type:ignore
+                        badge = _BADGES.get(badge_key, Badge(label=badge_key)) # TODO: replace with DEFAULT_BADGE
+                        st.badge(label=badge.label, icon=badge.icon, color=badge.color)
 
         # Second row
         st.write(description)
@@ -49,33 +55,51 @@ def kanban_card(
                 attachment_icon = f":material/attach_file: {len(attachments)}" if attachments else ":material/attach_file_off:"
                 with st.popover(attachment_icon, type='tertiary', disabled=not attachments):
                     for attachment in attachments:
-                        st.write(attachment)
+                        attachment_card(attachment)
+
+                    if st.button(label=":material/add:", key="add_attachment_buttonn", width='stretch'):
+                        pass # TODO
 
                 # Comments
-                comments_icon = f":material/feedback: {len(comments)}" if comments else ":material/chat_bubble:"
-                with st.popover(comments_icon, type='tertiary', disabled=not attachments):
-                    for comment in comments:
-                        st.write(comment)                 
+                remark_icon = f":material/feedback: {len(remarks)}" if remarks else ":material/chat_bubble:"
+                with st.popover(remark_icon, type='tertiary', disabled=not remarks):
+                    for remark in remarks:
+                        remark_card(remark)     
+
+                    if st.button(label=":material/add:", key="add_remark_button", width='stretch'):
+                        pass # TODO        
 
             st.space('stretch')
 
             if due is not None:    
-                # Due date
-                if due.year == datetime.now().year:
-                    due_date = due.strftime("%b %d").lstrip("0").replace(" 0", " ")
-                else:
-                    due_date = due.strftime("%b %d, %Y").replace(" 0", " ")
-                st.button(label=f"**Due:** {due_date}", icon=":material/timelapse:", type='tertiary', disabled=True)
+                st.button(label=f"**Due:** {_format_date(due)}", icon=":material/timelapse:", type='tertiary', disabled=True)
+
+
+def attachment_card(attachment: Attachment) -> None:
+    st.write(attachment.filepath)
+
+def remark_card(remark: Remark) -> None:
+    with st.container(border=True, horizontal=False, width='stretch'):
+        with st.container(border=False, horizontal=True, width='stretch'):
+            st.markdown(f"**{remark.author}**") 
+
+            for _ in range(10): st.space('stretch')
+            
+            st.markdown(f"_{_format_date(remark.date)}_")
+
+        st.write(remark.text)
 
 
 if __name__ == '__main__':
     kanban_card(
-        title="Do the dishes", 
-        description="This is some description of the task to be accomplished and optionally some aditional info regarding the execution of the task.",
+        title="Name of task", 
+        description="Description goes here...",
         badges=["in_progress", "favorite", "lolz"],
         attachments=[
-            "Path/To/File"
+            Attachment(filepath="filename.pdf")
             ],
-        comments=[],
+        remarks=[
+            Remark(author="Thomas", date=datetime.now(), text="Completely disagree with all this and more!")
+            ],
         due=datetime.now()
         )
