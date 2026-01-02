@@ -1,8 +1,10 @@
 import streamlit as st
 
 if __package__:
+    from .backend import SessionManager
     from ._core import Workbench, Project, _PRIORITIES
 else:
+    from backend import SessionManager
     from _core import Workbench, Project, _PRIORITIES
 
 
@@ -29,6 +31,31 @@ def _text_input(label: str, placeholder: str, mandatory: bool, warning: str | No
         st.warning(warning)
         text = None
     return text
+
+
+@st.dialog("New User", dismissible=False)
+def add_user_modal() -> str | None:
+    username = _text_input(
+        label="Username*",
+        placeholder="e.g. 'John Doe'",
+        mandatory=True,
+        warning="Please specify your name."
+        )
+    
+    st.caption(r"\*Mandatory field")
+    
+    submit = st.button(
+        label="Submit",
+        key="add_user_submit_button",
+        type="secondary",
+        icon=":material/upload:",
+        use_container_width=True,
+        disabled=not username
+    )
+    if submit and username:
+        st.session_state.username = username
+        SessionManager.register_username(username)
+        st.rerun()
 
 
 @st.dialog("Add Project")

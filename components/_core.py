@@ -134,19 +134,19 @@ class Project:
     
 @dataclass
 class Workbench:
-    employee: str
+    user: str
     projects: list[Project]
 
     @classmethod
     def from_dict(cls, d):
         return cls(
-            employee=d['employee'],
+            user=d['user'],
             projects=[Project.from_dict(proj) for proj in d['projects']]
         )
     
     def as_dict(self) -> dict:
         return {
-            'employee': self.employee,
+            'user': self.user,
             'projects': [proj.as_dict() for proj in self.projects]
         }
     
